@@ -6,6 +6,8 @@ import { z } from "zod";
  */
 const server = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]),
+  HUDDLE_API_KEY: z.string().min(1),
+  HUDDLE_PROJECT_ID: z.string().min(1),
 });
 
 /**
@@ -15,6 +17,7 @@ const server = z.object({
  */
 const client = z.object({
   // NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
+  NEXT_PUBLIC_HUDDLE_URL: z.string().min(1),
 });
 
 /**
@@ -23,7 +26,10 @@ const client = z.object({
  * @type {Record<keyof z.infer<typeof server> | keyof z.infer<typeof client>, string | undefined>}
  */
 const processEnv = {
+  NEXT_PUBLIC_HUDDLE_URL: process.env.NEXT_PUBLIC_HUDDLE_URL,
   NODE_ENV: process.env.NODE_ENV,
+  HUDDLE_API_KEY: process.env.HUDDLE_API_KEY,
+  HUDDLE_PROJECT_ID: process.env.HUDDLE_PROJECT_ID,
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 };
 
@@ -50,7 +56,7 @@ if (!!process.env.SKIP_ENV_VALIDATION == false) {
   if (parsed.success === false) {
     console.error(
       "❌ Invalid environment variables:",
-      parsed.error.flatten().fieldErrors,
+      parsed.error.flatten().fieldErrors
     );
     throw new Error("Invalid environment variables");
   }
@@ -64,7 +70,7 @@ if (!!process.env.SKIP_ENV_VALIDATION == false) {
         throw new Error(
           process.env.NODE_ENV === "production"
             ? "❌ Attempted to access a server-side environment variable on the client"
-            : `❌ Attempted to access server-side environment variable '${prop}' on the client`,
+            : `❌ Attempted to access server-side environment variable '${prop}' on the client`
         );
       return target[/** @type {keyof typeof target} */ (prop)];
     },

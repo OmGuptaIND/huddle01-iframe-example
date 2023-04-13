@@ -1,12 +1,75 @@
+import { huddleIframeApp } from "@huddle01/huddle01-iframe";
+import { useAtomValue, useSetAtom } from "jotai";
 import React from "react";
+import { roomIdMapAtom, setRoomIdMapAtom } from "~/store/iframe.atom";
+import {
+  meAtom,
+  removeRedirectUrlAtom,
+  setRedirectUrlAtom,
+} from "~/store/me.atom";
 import { useHuddleViewportActive } from "~/store/viewport.atoms";
+import { api } from "~/utils/api";
 
 const Sidebar = () => {
   const { active, toggle } = useHuddleViewportActive();
+  const setRoomIdMap = useSetAtom(setRoomIdMapAtom);
+  const roomIdMap = useAtomValue(roomIdMapAtom);
+  const displayName = useAtomValue(meAtom).displayName;
+  const setRedirectUrl = useSetAtom(setRedirectUrlAtom);
+  const removeRedirectUrl = useSetAtom(removeRedirectUrlAtom);
+
+  const roomCreator = api.roomRouter.createHuddleIframeRoom.useMutation({
+    onSuccess: (data) => {
+      setRoomIdMap("huddleRoom", {
+        roomId: data.roomId,
+        meetingLink: data.meetingLink,
+      });
+
+      console.log({ x: data.meetingLink });
+
+      joinRoomCreator.mutate({
+        roomId: data.roomId,
+        displayName,
+        userType: "host",
+      });
+    },
+    onError: (error) => {
+      alert("Error Creating Room");
+      console.error({ error });
+    },
+  });
+
+  const joinRoomCreator = api.roomRouter.createJoinRoomHandler.useMutation({
+    onSuccess: (data) => {
+      setRedirectUrl(data.redirectUrl);
+
+      setTimeout(() => {
+        toggle("mount");
+      }, 1000);
+    },
+    onError: (error) => {
+      alert("Error Getting Join Room TOKEN");
+      console.error({ error });
+    },
+  });
 
   const handleHuddleView = () => {
-    if (active) toggle("unmount");
-    else if (!active) toggle("mount");
+    if (active) {
+      removeRedirectUrl();
+      toggle("unmount");
+    }
+
+    if (!active) {
+      if (roomIdMap["huddleRoom"]) {
+        toggle("mount");
+        return;
+      }
+
+      roomCreator.mutate({
+        title: "TEST_MEETING",
+        roomLocked: true,
+      });
+    }
   };
 
   return (
