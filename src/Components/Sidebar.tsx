@@ -25,8 +25,6 @@ const Sidebar = () => {
         meetingLink: data.meetingLink,
       });
 
-      console.log({ x: data.meetingLink });
-
       joinRoomCreator.mutate({
         roomId: data.roomId,
         displayName,
